@@ -1,0 +1,7 @@
+[
+  {
+    "name": "default channels from server",
+    "url": "http://localhost:3000/assets/playlist.m3u",
+    "type": "m3u"
+  }
+]

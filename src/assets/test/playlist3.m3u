@@ -1,0 +1,10 @@
+#EXTM3U url-tvg="http://www.cn.ru/data/tv/schedule.zip" m3uautoload=1 cache=500 deinterlace=1 aspect-ratio=4:3 crop=690x550+10+10 reportstat=http://iptv.cn.ru/iptv-stat/post.php reportlog=http://clr.novotelecom.ru/iptv/log.php
+#EXTINF:-1 tvg-name=10338245 aspect-ratio=4:3 group-title="Зефир", Первый
+udp://@239.1.15.1:1234
+
+#EXTINF:-1 tvg-name=10338258 aspect-ratio=4:3, Россия 1
+udp://@239.1.15.2:1234
+
+#EXTINF:-1 tvg-name=10338257 aspect-ratio=4:3, Новый 2
+udp://@239.1.10.3:1002
+
