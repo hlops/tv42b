@@ -6,13 +6,13 @@ import Dictionary = _.Dictionary;
 
 export default class Dao<T> {
 
-  private static init = NodePersist.init({interval: 500});
+  private init = NodePersist.init({interval: 500});
 
   private promise: Q.Promise<Dictionary<T>>;
   private _savePromise: Q.Promise<Dictionary<T>>;
 
   constructor(private entityName: string) {
-    this.promise = Dao.init
+    this.promise = this.init
       .then(() => NodePersist.getItem(this.entityName))
       .then((value) => value || {});
   }
@@ -21,13 +21,13 @@ export default class Dao<T> {
     return this.promise;
   }
 
-  public setEntity(value: Dictionary<T>) {
+  public setEntity(value: Dictionary<T>): Q.Promise<Dictionary<T>> {
     this.promise = this.promise.then(() => value);
     this._savePromise = this.promise.then(() => NodePersist.setItem(this.entityName, value));
     return this.promise;
   }
 
-  public insert(value: Dictionary<T>) {
+  public insert(value: Dictionary<T>): Q.Promise<Dictionary<T>> {
     this.promise = this.promise.then((current: Dictionary<T>) => _.extend(current, value));
     this._savePromise = this.promise.then(() => NodePersist.setItem(this.entityName, value));
     return this.promise;

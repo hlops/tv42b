@@ -3,6 +3,7 @@
 import * as ActionsService from "../dao/channelsService";
 import * as ChannelsService from "../dao/channelsService";
 import * as ChannelItemsService from "../dao/channelItemsService";
+import * as GroupsService from "../dao/groupsService";
 import * as IdentityService from "../dao/identityService";
 import * as SourcesService from "../dao/sourcesService";
 import * as _ from "lodash";
@@ -55,9 +56,10 @@ function loadAll(): Q.Promise<any> {
 export function purgeAll() {
   return Q.all([
     ActionsService.clear(),
-    ChannelsService.clear(),
     ChannelItemsService.clear(),
-    SourcesService.clear(),
-    IdentityService.clear()
+    ChannelsService.clear(),
+    GroupsService.clear(),
+    IdentityService.clear(),
+    SourcesService.clear()
   ]);
 }

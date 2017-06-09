@@ -1,7 +1,8 @@
 'use strict';
 
 import * as ChannelsService from "./channelsService";
-import * as IdentityService from "../dao/identityService";
+import * as IdentityService from "./identityService";
+import * as GroupService from "./groupsService";
 import * as Q from "q";
 import * as _ from "lodash";
 import Dao from "./inner/dao";
@@ -73,6 +74,7 @@ export function findItems(sourceOrId: Source|string): Q.Promise<Dictionary<Chann
 }
 
 export function processSource(sourceOrId: Source|string): Q.Promise<any> {
+  const groupNames: {[key: string]: boolean} = {};
   let channels: Dictionary<Channel>;
   let items: Dictionary<ChannelItem>;
 
@@ -82,16 +84,21 @@ export function processSource(sourceOrId: Source|string): Q.Promise<any> {
     .then(_items => items = _items)
     .then(function () {
       const promises: Q.Promise<ChannelItem>[] = _.compact(_.map(channels, function (channel) {
+        groupNames[channel.group] = true;
         if (!items.hasOwnProperty(channel.name) || !items[channel.name].changed) {
           return IdentityService.next().then((id) => new ChannelItem(id, channel));
         }
       }));
       return Q.all(promises);
-    }).then(function (items: ChannelItem[]) {
+    })
+    .then(function (items: ChannelItem[]) {
       const transform = _.transform(items, function (result: Dictionary<ChannelItem>, item: ChannelItem) {
         result[item.name] = item;
       }, {});
       return Singleton.dao.insert(transform);
+    })
+    .then((result) => {
+      GroupService.createGroups(_.keys(groupNames)).then(() => result);
     });
 }
 

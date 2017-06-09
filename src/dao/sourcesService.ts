@@ -1,12 +1,12 @@
 'use strict';
 
-import {Source, SourceType} from "../model/source";
 import * as ActionsService from "./actionsService";
-import * as IdentityService from "../dao/identityService";
 import * as ChannelsService from "./channelsService";
-import Dao from "./inner/dao";
+import * as IdentityService from "../dao/identityService";
 import * as m3uParser from "../service/m3uParser";
+import Dao from "./inner/dao";
 import {Channel} from "../model/channel";
+import {Source, SourceType} from "../model/source";
 import Dictionary = _.Dictionary;
 import fetch = require('node-fetch');
 
@@ -86,7 +86,7 @@ export function processSource(sourceOrId: Source|string): Q.Promise<Source> {
       return m3uParser.parse(action, res.body)
     })
     .progress((channel: Channel) => ChannelsService.update(action, channel))
-    .catch(e =>{
+    .catch(e => {
       if (action) {
         return ActionsService.finish(action, e);
       } else {

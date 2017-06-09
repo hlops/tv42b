@@ -1,4 +1,5 @@
 "use strict";
+
 import {IChannel} from "./channel";
 
 class M3U {

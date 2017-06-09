@@ -5,6 +5,6 @@ udp://@239.1.15.1:1234
 #EXTINF:-1 tvg-name=10338258 aspect-ratio=4:3, Россия 1
 udp://@239.1.15.2:1234
 
-#EXTINF:-1 tvg-name=10338257 aspect-ratio=4:3, Новый 2
+#EXTINF:-1 tvg-name=10338257 aspect-ratio=4:3 group-title="HD", Новый 2
 udp://@239.1.10.3:1002
 
