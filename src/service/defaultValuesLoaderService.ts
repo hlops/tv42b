@@ -1,6 +1,6 @@
 'use strict';
 
-import * as ActionsService from "../dao/channelsService";
+import * as ActionsService from "../dao/actionsService";
 import * as ChannelsService from "../dao/channelsService";
 import * as ChannelItemsService from "../dao/channelItemsService";
 import * as GroupsService from "../dao/groupsService";
@@ -16,7 +16,7 @@ export function loadDefaultValues(): Q.Promise<[any]> {
   return IdentityService.isEmpty().then(
     function (isEmpty: boolean): any {
       if (isEmpty) {
-        purgeAll().then(loadAll);
+        return purgeAll().then(loadAll);
       }
     });
 }

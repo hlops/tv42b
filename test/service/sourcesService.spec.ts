@@ -17,7 +17,7 @@ describe('Source service', () => {
   const originalSource = new Source('12345', 'name', 'file://localhost:3000/data', SourceType.m3u);
 
   beforeEach(function (done) {
-    DefaultValuesLoaderService.purgeAll()
+    return DefaultValuesLoaderService.purgeAll()
       .finally(done)
       .done();
   });

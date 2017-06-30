@@ -9,7 +9,7 @@ class Singleton {
 }
 
 export function clear(): Q.Promise<Dictionary<number>> {
-  return Singleton.dao.setEntity({});
+  return Singleton.dao.setEntity({'identity': 0});
 }
 
 export function next(): Q.Promise<string> {

@@ -47,3 +47,7 @@ export function createSourceAction(text: string, source: Source): Q.Promise<Acti
       return add(new SourceAction(id, text, source));
     });
 }
+
+export function clear(): Q.Promise<Dictionary<Action>> {
+  return Singleton.dao.setEntity({});
+}
