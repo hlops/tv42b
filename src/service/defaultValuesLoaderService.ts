@@ -1,65 +1,63 @@
 'use strict';
 
-import * as ActionsService from "../dao/actionsService";
-import * as ChannelsService from "../dao/channelsService";
-import * as ChannelItemsService from "../dao/channelItemsService";
-import * as GroupsService from "../dao/groupsService";
-import * as IdentityService from "../dao/identityService";
-import * as SourcesService from "../dao/sourcesService";
-import * as _ from "lodash";
-import {SourceType} from "../model/source";
-import Q = require("q");
-import fetch = require('node-fetch')
+import * as EventQueue from './events/EventQueue';
+import * as _ from 'lodash';
+import actionsService from '../dao/actionsService';
+import channelItemsService from '../dao/channelItemsService';
+import channelsService from '../dao/channelsService';
+import groupsService from '../dao/groupsService';
+import identityService from '../dao/identityService';
+import sourcesService from '../dao/sourcesService';
+import { SourceType } from '../model/source';
+import Q = require('q');
 import fs = require('fs');
 
-export function loadDefaultValues(): Q.Promise<[any]> {
-  return IdentityService.isEmpty().then(
-    function (isEmpty: boolean): any {
-      if (isEmpty) {
-        return purgeAll().then(loadAll);
-      }
-    });
+export function loadDefaultValues(): Q.Promise<void> {
+	return EventQueue.initialization.isReady().then(() => {
+		if (identityService.isEmpty()) {
+			purgeAll();
+			return loadAll();
+		}
+	});
 }
 
-export function loadSources(path: string = `${__dirname}/../assets/initialValues/sources.json`): Q.Promise<void> {
-  return Q.Promise<void>(function (resolve) {
-    fs.readFile(path, function (err, data) {
-      let values = JSON.parse(data.toString("UTF-8"));
-      _.each(values, function (value) {
-        SourcesService.create(value.name, value.url, SourceType[<string>value.type])
-          .then(source => SourcesService.processSource(source))
-          .then(source => ChannelItemsService.processSource(source))
-          .done();
-      });
-      resolve(undefined);
-    });
-  });
+export function loadSources(
+	path: string = `${__dirname}/../assets/initialValues/sources.json`
+): Q.Promise<void> {
+	return Q.Promise<void>(function(resolve) {
+		fs.readFile(path, function(err, data) {
+			let values = JSON.parse(data.toString('UTF-8'));
+			_.each(values, function(value) {
+				sourcesService.create(value.name, value.url, SourceType[<string>value.type]);
+			});
+			resolve(undefined);
+		});
+	});
 }
 
-export function loadChannelItems(path: string = `${__dirname}/../assets/initialValues/channelItems.json`): Q.Promise<void> {
-  return Q.Promise<any>(function (resolve) {
-    fs.readFile(path, function (err, data) {
-      let values: any[] = JSON.parse(data.toString("UTF-8"));
-      Q.all(_.map(values, value => ChannelItemsService.create(value.name, value.group, value.shift)))
-        .then(resolve)
-        .done();
-    });
-  });
+export function loadChannelItems(
+	path: string = `${__dirname}/../assets/initialValues/channelItems.json`
+): Q.Promise<void> {
+	return Q.Promise<any>(function(resolve) {
+		fs.readFile(path, function(err, data) {
+			let values: any[] = JSON.parse(data.toString('UTF-8'));
+			Q.all(
+				_.map(values, value => channelItemsService.create(value.name, value.group, value.shift))
+			)
+				.then(resolve)
+				.done();
+		});
+	});
 }
 
 function loadAll(): Q.Promise<any> {
-  return Q.all([
-    loadSources()
-  ]);
+	return Q.all([loadSources()]);
 }
 
-export function purgeAll() {
-  return Q.all([
-    ActionsService.clear(),
-    ChannelItemsService.clear(),
-    ChannelsService.clear(),
-    GroupsService.clear(),
-    IdentityService.clear(),
-    SourcesService.clear()
-  ]);
+export function purgeAll(): void {
+	actionsService.clear();
+	channelItemsService.clear();
+	channelsService.clear();
+	groupsService.clear();
+	sourcesService.clear();
 }

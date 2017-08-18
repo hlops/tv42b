@@ -1,19 +1,12 @@
 'use strict';
 
-import * as ChannelsService from "./channelsService";
-import * as IdentityService from "./identityService";
-import * as GroupService from "./groupsService";
-import * as Q from "q";
-import * as _ from "lodash";
-import Dao from "./inner/dao";
-import {ChannelItem} from "../model/channelItem";
-import {Channel, IChannel} from "../model/channel";
-import {Source} from "../model/source";
+import * as _ from 'lodash';
+import identityService from './identityService';
+import {ChannelItem} from '../model/channelItem';
+import {IChannel} from '../model/channel';
+import {Source} from '../model/source';
+import DaoService from "./inner/daoService";
 import Dictionary = _.Dictionary;
-
-class Singleton {
-  static dao: Dao<ChannelItem> = new Dao<ChannelItem>('channelItems');
-}
 
 class DummyChannel implements IChannel {
   constructor(private _name: string, private _group: string, private _shift: number) {
@@ -36,72 +29,76 @@ class DummyChannel implements IChannel {
   }
 }
 
-export function create(name: string, group: string, shift: number): Q.Promise<ChannelItem> {
-  return IdentityService.next()
-    .then((id) => {
-      const item = new ChannelItem(id, new DummyChannel(name, group, shift));
-      item.changed = true;
-      return this.add(item);
-    });
-}
-
-export function add(item: ChannelItem): Q.Promise<ChannelItem> {
-  return getAll().then(function (items) {
-    items[item.name] = item;
-    return Singleton.dao.setEntity(items)
-      .then(() => item);
-  });
-}
-
-export function getAll(): Q.Promise<Dictionary<ChannelItem>> {
-  return Singleton.dao.getEntity();
-}
-
-export function findItems(sourceOrId: Source|string): Q.Promise<Dictionary<ChannelItem>> {
-  let sourceId;
-  if (typeof sourceOrId === "string") {
-    sourceId = sourceOrId;
-  } else {
-    sourceId = sourceOrId.id;
+class ChannelItemsService extends DaoService<Dictionary<ChannelItem>> {
+  constructor() {
+    super('channelItems', {});
   }
-  return getAll().then(function (items: Dictionary<ChannelItem>) {
-    return _.transform(items, function (result: Dictionary<ChannelItem>, value: ChannelItem, key: string) {
-      if (!value.m3u.sourceId || value.m3u.sourceId === sourceId) {
-        result[key] = value;
-      }
-    }, {});
-  });
-}
 
-export function processSource(sourceOrId: Source|string): Q.Promise<any> {
-  const groupNames: {[key: string]: boolean} = {};
-  let channels: Dictionary<Channel>;
-  let items: Dictionary<ChannelItem>;
+  public create(name: string, group: string, shift: number): void {
+    const item = new ChannelItem(identityService.next(), new DummyChannel(name, group, shift));
+    item.changed = true;
+    this.add(item);
+  }
 
-  return ChannelsService.findChannels(sourceOrId)
-    .then(_channels => channels = _channels)
-    .then(() => findItems(sourceOrId))
-    .then(_items => items = _items)
-    .then(function () {
-      const promises: Q.Promise<ChannelItem>[] = _.compact(_.map(channels, function (channel) {
-        groupNames[channel.group] = true;
-        if (!items.hasOwnProperty(channel.name) || !items[channel.name].changed) {
-          return IdentityService.next().then((id) => new ChannelItem(id, channel));
+  public add(item: ChannelItem) {
+    this.value[item.name] = item;
+    this.save();
+  }
+
+  public find(sourceOrId: Source | string): Dictionary<ChannelItem> {
+    let sourceId;
+    if (typeof sourceOrId === 'string') {
+      sourceId = sourceOrId;
+    } else {
+      sourceId = sourceOrId.id;
+    }
+    return _.transform(
+      this.value,
+      function (result: Dictionary<ChannelItem>, value: ChannelItem, key: string) {
+        if (!value.m3u.sourceId || value.m3u.sourceId === sourceId) {
+          result[key] = value;
         }
-      }));
-      return Q.all(promises);
-    })
-    .then(function (items: ChannelItem[]) {
-      const transform = _.transform(items, function (result: Dictionary<ChannelItem>, item: ChannelItem) {
-        result[item.name] = item;
-      }, {});
-      return Singleton.dao.insert(transform);
-    })
-    .then((result) => {
-      GroupService.createGroups(_.keys(groupNames)).then(() => result);
-    });
+      },
+      {}
+    );
+  }
 }
 
-export function clear(): Q.Promise<Dictionary<ChannelItem>> {
-  return Singleton.dao.setEntity({});
+/*
+export function processSource(sourceOrId: Source | string): Q.Promise<any> {
+	const groupNames: { [key: string]: boolean } = {};
+	let channels: Dictionary<Channel>;
+	let items: Dictionary<ChannelItem>;
+
+	return ChannelsService.findChannels(sourceOrId)
+		.then(_channels => (channels = _channels))
+		.then(() => findItems(sourceOrId))
+		.then(_items => (items = _items))
+		.then(function() {
+			return _.compact(
+				_.map(channels, function(channel) {
+					groupNames[channel.group] = true;
+					if (!items.hasOwnProperty(channel.name) || !items[channel.name].changed) {
+						return new ChannelItem(IdentityService.next(), channel);
+					}
+				})
+			);
+		})
+		.then(function(items: ChannelItem[]) {
+			const transform = _.transform(
+				items,
+				function(result: Dictionary<ChannelItem>, item: ChannelItem) {
+					result[item.name] = item;
+				},
+				{}
+			);
+			Dao.set(ENTITY_NAME, transform);
+			return transform;
+		})
+		.then(result => {
+			GroupService.createGroups(_.keys(groupNames)).then(() => result);
+		});
 }
+*/
+
+export default new ChannelItemsService();

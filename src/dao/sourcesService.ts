@@ -1,68 +1,62 @@
 'use strict';
 
-import * as ActionsService from "./actionsService";
-import * as ChannelsService from "./channelsService";
-import * as IdentityService from "../dao/identityService";
-import * as m3uParser from "../service/m3uParser";
-import Dao from "./inner/dao";
-import {Channel} from "../model/channel";
-import {Source, SourceType} from "../model/source";
+import IdentityService from '../dao/identityService';
+import {Source, SourceType} from '../model/source';
+import DaoService from './inner/daoService';
 import Dictionary = _.Dictionary;
-import fetch = require('node-fetch');
 
-class Singleton {
-  static dao: Dao<Source> = new Dao<Source>('sources');
-}
+class SourcesService extends DaoService<Dictionary<Source>> {
+  constructor() {
+    super('sources', {});
+  }
 
-export function getSources(): Q.Promise<Dictionary<Source>> {
-  return Singleton.dao.getEntity();
-}
+  public create(name: string, url: string, type: SourceType): Source {
+    const source = new Source(IdentityService.next(), name, url, type);
+    this.add(source);
+    return source;
+  }
 
-export function create(name: string, url: string, type: SourceType): Q.Promise<Source> {
-  return IdentityService.next()
-    .then((id) => add(new Source(id, name, url, type)));
-}
-
-export function get(id: string): Q.Promise<Source> {
-  return getSources().then((sources) => sources[id]);
-}
-
-export function add(source: Source): Q.Promise<Source> {
-  return getSources().then(function (sources) {
-    if (sources.hasOwnProperty(source.id)) {
+  public add(source: Source) {
+    if (this.value.hasOwnProperty(source.id)) {
       throw 'Source already exists: ' + source.id;
     }
-    sources[source.id] = source;
-    return Singleton.dao.setEntity(sources)
-      .then(() => source);
-  });
-}
+    this.value[source.id] = source;
+    this.save();
+  }
 
-export function update(source: Source): Q.Promise<Source> {
-  return getSources().then(function (sources) {
-    if (!sources.hasOwnProperty(source.id)) {
+  public update(source: Source) {
+    if (!this.value.hasOwnProperty(source.id)) {
       throw 'Source not found: ' + source.id;
     }
-    sources[source.id] = source;
-    return Singleton.dao.setEntity(sources)
-      .then(() => source);
-  });
-}
+    this.value[source.id] = source;
+    this.save();
+  }
 
-export function removeSource(source: Source|string): Q.Promise<Dictionary<Source>> {
-  return getSources().then(function (sources) {
-    if (typeof source === "string") {
-      delete sources[source];
+  public removeSource(source: Source | string) {
+    if (typeof source === 'string') {
+      delete this.value[source];
     } else {
-      delete sources[source.id];
+      delete this.value[source.id];
     }
-    return Singleton.dao.setEntity(sources);
-  });
+    this.save();
+  }
+
+  public getSource(sourceOrId: Source | string): Source {
+    if (typeof sourceOrId === 'string') {
+      return this.value[sourceOrId]
+    } else {
+      return sourceOrId;
+    }
+  }
+
+  public execute(sourceOrId: Source | string) {
+    let source = this.getSource(sourceOrId);
+  }
 }
 
-export function processSource(sourceOrId: Source|string): Q.Promise<Source> {
+/*export function processSource(sourceOrId: Source | string): Q.Promise<Source> {
   let sourceId;
-  if (typeof sourceOrId === "string") {
+  if (typeof sourceOrId === 'string') {
     sourceId = sourceOrId;
   } else {
     sourceId = sourceOrId.id;
@@ -83,7 +77,7 @@ export function processSource(sourceOrId: Source|string): Q.Promise<Source> {
       return fetch(url);
     })
     .then(function (res) {
-      return m3uParser.parse(action, res.body)
+      return m3uParser.parse(action, res.body);
     })
     .progress((channel: Channel) => ChannelsService.update(action, channel))
     .catch(e => {
@@ -99,7 +93,6 @@ export function processSource(sourceOrId: Source|string): Q.Promise<Source> {
     })
     .then(() => source);
 }
+*/
 
-export function clear(): Q.Promise<Dictionary<Source>> {
-  return Singleton.dao.setEntity({});
-}
+export default new SourcesService();

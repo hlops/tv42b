@@ -1,32 +1,24 @@
 'use strict';
 
-import * as IdentityService from "./identityService";
-import Dao from "./inner/dao";
-import {Action} from "../model/action";
-import {Source} from "../model/source";
-import {SourceAction} from "../model/actions/SourceAction";
-import Q = require("q");
+import DaoService from './inner/daoService';
+import {Action} from '../model/action';
 import Dictionary = _.Dictionary;
 
-class Singleton {
-  static dao: Dao<Action> = new Dao<Action>('actions');
-}
+class ActionsService extends DaoService<Dictionary<Action>> {
+  constructor() {
+    super('actions', {});
+  }
 
-export function getAll(): Q.Promise<Dictionary<Action>> {
-  return Singleton.dao.getEntity();
-}
-
-export function add(action: Action): Q.Promise<Action> {
-  return getAll().then(function (actions) {
-    if (actions.hasOwnProperty(action.id)) {
+  public add(action: Action): void {
+    if (this.value.hasOwnProperty(action.id)) {
       throw 'Action already exists: ' + action.id;
     }
-    actions[action.id] = action;
-    return Singleton.dao.setEntity(actions)
-      .then(() => action);
-  });
+    this.value[action.id] = action;
+    this.save();
+  }
 }
 
+/*
 export function finish(action: Action, error?: string): Q.Promise<Action> {
   return getAll().then(function (actions) {
     if (action.finished) {
@@ -37,17 +29,15 @@ export function finish(action: Action, error?: string): Q.Promise<Action> {
     }
     action.done(error);
     actions[action.id] = action;
-    return Singleton.dao.setEntity(actions).then(() => action);
+    Dao.set(ENTITY_NAME, actions);
+    return action;
   });
 }
 
 export function createSourceAction(text: string, source: Source): Q.Promise<Action> {
-  return IdentityService.next()
-    .then(function (id: string) {
-      return add(new SourceAction(id, text, source));
-    });
+  return add(new SourceAction(IdentityService.next(), text, source));
 }
 
-export function clear(): Q.Promise<Dictionary<Action>> {
-  return Singleton.dao.setEntity({});
-}
+*/
+
+export default new ActionsService();

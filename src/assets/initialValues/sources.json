@@ -1,7 +1,12 @@
 [
   {
-    "name": "default channels from server",
-    "url": "http://localhost:3000/assets/playlist.m3u",
+    "name": "Load default M3U channel list from local resources",
+    "url": "http://localhost:3000/assets/test/playlist1.m3u",
     "type": "m3u"
+  },
+  {
+    "name": "Load default XMLTV from local resources",
+    "url": "http://localhost:3000/assets/test/xmltv.gz",
+    "type": "xmltv"
   }
 ]

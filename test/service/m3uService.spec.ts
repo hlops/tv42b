@@ -4,14 +4,13 @@ import * as m3uParser from "../../src/service/m3uParser";
 import {Channel} from "../../src/model/channel";
 import {Source, SourceType} from "../../src/model/source";
 import {SourceAction} from "../../src/model/actions/SourceAction";
-import Q = require("q");
 import fs = require('fs');
 
 describe('m3u', () => {
   it('parse() reads playlist1.m3u', (done) => {
     let counter = 0;
-    let source: Source = new Source('1002', 'name', 'http://localhost:3000/test-data', SourceType.xlmtv);
-    let action: SourceAction = new SourceAction('1001', 'test action', source);
+    let source: Source = new Source('1001', 'name', 'http://localhost:3000/test-data', SourceType.xlmtv);
+    let action: SourceAction = new SourceAction('1002', 'test action', source);
     m3uParser.parse(action, fs.createReadStream('src/assets/test/playlist1.m3u'))
       .progress(function (channel: Channel) {
         expect(channel.url).toBeDefined();

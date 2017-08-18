@@ -1,34 +1,21 @@
 'use strict';
 
-import * as IdentityService from "../../src/dao/identityService";
-import Persist from "../../src/dao/inner/storage";
-import Q = require("q");
+import * as EventQueue from '../../src/service/events/EventQueue';
+import identityService from '../../src/dao/identityService';
 
 describe('Identity service', () => {
-  beforeEach(function (done) {
-    IdentityService.clear().finally(function () {
-      done();
-    }).done();
-  });
+	beforeAll(done => {
+		EventQueue.initialization.isReady().then(done);
+	});
 
-  it('', function (done) {
-    let arr: any = [];
-    for (let i = 0; i < 100; i++) {
-      let current = i;
-      arr.push(
-        IdentityService.next().then(function (value) {
-          expect(value).toBe(current.toString(36));
-        })
-      );
-    }
-    Q.all(arr).then(function () {
-      // wait the changes to be written
-      setTimeout(function () {
-        Persist.get('identity').then(function (value) {
-          expect(value.current).toBe(100);
-        });
-        done();
-      }, 120);
-    });
-  });
+	beforeEach(function() {
+		identityService.clear();
+	});
+
+	it('', function() {
+		let arr: any = [];
+		for (let i = 1; i < 100; i++) {
+			expect(identityService.next()).toBe(i.toString(36));
+		}
+	});
 });
